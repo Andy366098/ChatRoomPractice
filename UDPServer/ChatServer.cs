@@ -11,7 +11,7 @@ namespace UDPServer
     internal class ChatServer
     {
         private UdpClient listener;
-        private readonly Dictionary<string, IPEndPoint> client = new Dictionary<string, IPEndPoint>();
+        private readonly Dictionary<string, IPEndPoint> clients = new Dictionary<string, IPEndPoint>();
         private readonly Dictionary<string, string> userNames = new Dictionary<string, string>();
 
         public ChatServer()
@@ -38,7 +38,36 @@ namespace UDPServer
         }
         private void HandleReceiveMessages()
         {
+            IPEndPoint peerEndPoint = null;
+            var buffer = listener.Receive(ref peerEndPoint);
+            var request = Encoding.ASCII.GetString(buffer);
 
+            if (request.StartsWith("LOGIN:", StringComparison.OrdinalIgnoreCase))
+            {
+                var tokens = request.Split(':');
+                var clientId = peerEndPoint.ToString();
+
+                clients.Add(clientId, peerEndPoint);
+                userNames.Add(clientId, tokens[1]);
+                Console.WriteLine($"Client Login : {tokens[1]}");
+            }else if(request.StartsWith("MESSAGE:", StringComparison.OrdinalIgnoreCase))
+            {
+                var tokens = request.Split(':');
+                var message = tokens[1];
+                var peerId = peerEndPoint.ToString();
+                Console.WriteLine($"Receive: {userNames[peerId]}:{tokens[1]}");
+                foreach(var clientId in userNames.Keys)
+                {
+                    if (clientId == peerId)
+                    {
+                        continue;
+                    }
+                    var data = "MESSAGE:" + userNames[peerId] + ":" + message;
+                    var dataBuffer = Encoding.ASCII.GetBytes(data);
+
+                    listener.Send(dataBuffer, dataBuffer.Length, clients[clientId]);
+                }
+            }
         }
     }
 }
