@@ -32,7 +32,7 @@ namespace UDPServer
                 var numbytes = listener.Available;
                 if(numbytes > 0)
                 {
-                    
+                    HandleReceiveMessages();
                 }
             }
         }
