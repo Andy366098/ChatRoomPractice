@@ -47,6 +47,22 @@ namespace ChatCore
             _WriteToBuffer(bytes);
             return true;
         }
+        protected bool _ReadFromBuffer(out int i)
+        {
+            if (BitConverter.IsLittleEndian)
+            {
+                var byteData = new byte[sizeof(int)];
+                Buffer.BlockCopy(m_PacketBuffer, m_BeginPos + m_Pos, byteData, 0, byteData.Length);
+                Array.Reverse(byteData);
+                i = BitConverter.ToInt32(byteData, 0);
+            }
+            else
+            {
+                i = BitConverter.ToInt32(m_PacketBuffer, m_BeginPos + m_Pos);
+            }
+            m_Pos += sizeof(int);
+            return true;
+        }
         private void _WriteToBuffer(byte[] byteData)
         {
             // converter little-endian to network's big-endian
