@@ -33,20 +33,38 @@ namespace ChatCore
             length = header.m_Length;
             command = header.m_Command;
         }
-        public virtual void Serialize()
+        public virtual void Serialize() //序列化，這裡應該是分包寫入資料
         {
             m_Pos = m_BeginPos;
             _WriteToBuffer(m_Length);
             _WriteToBuffer(m_Command);
-
         }
-        protected bool _WriteToBuffer(int i)
+        public virtual void Unserialize()   //解包
+        {
+            m_Pos = m_BeginPos;
+            _ReadFromBuffer(out m_Length);
+            _ReadFromBuffer(out m_Command);
+        }
+        public byte[] SealPacketBuffer(out int iLength) //將包前面多加一個長度
+        {
+            m_Length = m_Pos;
+
+            var curPos = m_Pos;
+            m_Pos = m_BeginPos;
+            _WriteToBuffer(m_Length);
+            m_Pos = curPos;
+            iLength = m_Length;
+            return m_PacketBuffer;
+        }
+        
+        protected bool _WriteToBuffer(int i)    //將整數型別資料轉成byte陣列
         {
             // convert int to byte array
             var bytes = BitConverter.GetBytes(i);
             _WriteToBuffer(bytes);
             return true;
         }
+        
         protected bool _ReadFromBuffer(out int i)
         {
             if (BitConverter.IsLittleEndian)
